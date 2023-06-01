@@ -3,7 +3,7 @@ import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dispatch, Fragment, SetStateAction, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import useUsers, { User } from "./hooks/useUsers";
+import useUsers, { User } from "../hooks/useUsers";
 
 function Modal({
   open,
