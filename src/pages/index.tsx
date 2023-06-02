@@ -7,10 +7,10 @@ import { Dispatch, Fragment, SetStateAction, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import useUsers, { User } from "../hooks/useUsers";
 import { toast } from "react-hot-toast";
-import Image from "next/image";
+import Image, { ImageProps } from "next/image";
 
 //https://github.com/vercel/next.js/discussions/26168#discussioncomment-1863742
-function BlurImage(props: any) {
+function BlurImage(props: ImageProps) {
   const [isLoading, setLoading] = useState(true);
 
   return (
