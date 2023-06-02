@@ -7,6 +7,30 @@ import { Dispatch, Fragment, SetStateAction, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import useUsers, { User } from "../hooks/useUsers";
 import { toast } from "react-hot-toast";
+import Image from "next/image";
+
+//https://github.com/vercel/next.js/discussions/26168#discussioncomment-1863742
+function BlurImage(props: any) {
+  const [isLoading, setLoading] = useState(true);
+
+  return (
+    <div className="relative h-8 w-8">
+      <Image
+        {...props}
+        alt={props.alt}
+        className={clsx(
+          props.className,
+          "h-8 w-8 rounded-full bg-gray-800 duration-700 ease-in-out",
+          isLoading
+            ? "scale-110 blur-sm grayscale"
+            : "scale-100 blur-0 grayscale-0"
+        )}
+        fill
+        onLoadingComplete={() => setLoading(false)}
+      />
+    </div>
+  );
+}
 
 function Modal({
   open,
@@ -121,7 +145,6 @@ function Modal({
       : reset({
           firstName: "",
           lastName: "",
-          age: 0,
           address: "",
         });
   }, [user]);
@@ -241,7 +264,6 @@ function Modal({
                               {...register("age")}
                               id="age"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6"
-                              min={0}
                               placeholder="10"
                               defaultValue={user?.age}
                               required
@@ -439,13 +461,12 @@ export default function Home() {
                   <tr key={index}>
                     <td className="py-4 pl-4 pr-8 sm:pl-6 lg:pl-8">
                       <div className="flex items-center gap-x-4">
-                        <img
+                        <BlurImage
                           src={
                             "https://api.dicebear.com/6.x/avataaars/svg?seed=" +
                             item.id
                           }
-                          alt=""
-                          className="h-8 w-8 rounded-full bg-gray-800"
+                          alt="avatar"
                         />
                         <button
                           type="button"
