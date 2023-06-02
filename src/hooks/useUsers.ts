@@ -11,7 +11,7 @@ export interface User {
   firstName: string;
   lastName: string;
   status: Status;
-  age: string;
+  age: number;
   address: string;
   createdAt: Date;
   updatedAt: Date;

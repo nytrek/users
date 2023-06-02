@@ -2,10 +2,11 @@ import { Dialog, Transition } from "@headlessui/react";
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
+import { formatDistanceToNow } from "date-fns";
 import { Dispatch, Fragment, SetStateAction, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import useUsers, { User } from "../hooks/useUsers";
-import { formatDistanceToNow } from "date-fns";
+import { toast } from "react-hot-toast";
 
 function Modal({
   open,
@@ -21,17 +22,21 @@ function Modal({
   const createUser = useMutation(
     async (user: User) => {
       const { age, ...payload } = user;
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_URL + "/users/create",
-        {
+      const response = await toast.promise(
+        fetch(process.env.NEXT_PUBLIC_URL + "/users/create", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             ...payload,
-            age: parseInt(age),
+            age: parseInt(age as unknown as string),
           }),
+        }),
+        {
+          loading: "Loading...",
+          success: "User Created!",
+          error: "Error!",
         }
       );
       const { data, error } = await response.json();
@@ -48,14 +53,75 @@ function Modal({
       },
     }
   );
-  const onSubmit: SubmitHandler<User> = (data) => createUser.mutate(data);
+  const updateUser = useMutation(
+    async (user: User) => {
+      const { age, ...payload } = user;
+      const response = await toast.promise(
+        fetch(process.env.NEXT_PUBLIC_URL + "/users/update/" + user.id, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...payload,
+            age: parseInt(age as unknown as string),
+          }),
+        }),
+        {
+          loading: "Loading...",
+          success: "User Updated!",
+          error: "Error!",
+        }
+      );
+      const { data, error } = await response.json();
+      if (error) throw new Error(error);
+      return data;
+    },
+    {
+      onSuccess: () => {
+        setOpen(false);
+        queryClient.invalidateQueries(["users"]);
+      },
+      onError: (err: any) => {
+        console.log(err.message);
+      },
+    }
+  );
+  const deleteUser = useMutation(
+    async (id: number) => {
+      const response = await toast.promise(
+        fetch(process.env.NEXT_PUBLIC_URL + "/users/delete/" + id, {
+          method: "DELETE",
+        }),
+        {
+          loading: "Loading...",
+          success: "User Deleted!",
+          error: "Error!",
+        }
+      );
+      const { data, error } = await response.json();
+      if (error) throw new Error(error);
+      return data;
+    },
+    {
+      onSuccess: () => {
+        setOpen(false);
+        queryClient.invalidateQueries(["users"]);
+      },
+      onError: (err: any) => {
+        console.log(err.message);
+      },
+    }
+  );
+  const onSubmit: SubmitHandler<User> = (data) =>
+    user ? updateUser.mutate(data) : createUser.mutate(data);
   useEffect(() => {
     user
       ? reset(user)
       : reset({
           firstName: "",
           lastName: "",
-          age: "",
+          age: 0,
           address: "",
         });
   }, [user]);
@@ -218,6 +284,7 @@ function Modal({
                           {!!user && (
                             <button
                               type="button"
+                              onClick={() => deleteUser.mutate(user.id)}
                               className="focus-visible:outline-bg-[#FCAF17] mt-6 inline-flex w-full justify-center rounded-md border border-gray-900 px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
                             >
                               Delete
@@ -240,6 +307,7 @@ function Modal({
 export default function Home() {
   const { data, isLoading } = useUsers();
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const [user, setUser] = useState<User | undefined>();
   const openModal = (user?: User) => {
     setOpen(true);
@@ -267,6 +335,8 @@ export default function Home() {
                 placeholder="Search..."
                 type="search"
                 name="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
           </form>
@@ -356,64 +426,75 @@ export default function Home() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {data?.map((item, index) => (
-                <tr key={index}>
-                  <td className="py-4 pl-4 pr-8 sm:pl-6 lg:pl-8">
-                    <div className="flex items-center gap-x-4">
-                      <img
-                        src={
-                          "https://api.dicebear.com/6.x/avataaars/svg?seed=" +
-                          item.id
-                        }
-                        alt=""
-                        className="h-8 w-8 rounded-full bg-gray-800"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => openModal(item)}
-                        className="truncate text-sm font-medium leading-6 text-white"
-                      >
-                        {item.firstName + " " + item.lastName}
-                      </button>
-                    </div>
-                  </td>
-                  <td className="hidden py-4 pl-0 pr-4 sm:table-cell sm:pr-8">
-                    <div className="flex gap-x-3">
-                      <div className="font-mono text-sm leading-6 text-gray-400">
-                        Request -
+              {data
+                ?.filter(
+                  (user) =>
+                    user.firstName.includes(search) ||
+                    user.lastName.includes(search) ||
+                    user.status.includes(search) ||
+                    user.age.toString().includes(search) ||
+                    user.address.includes(search)
+                )
+                .map((item, index) => (
+                  <tr key={index}>
+                    <td className="py-4 pl-4 pr-8 sm:pl-6 lg:pl-8">
+                      <div className="flex items-center gap-x-4">
+                        <img
+                          src={
+                            "https://api.dicebear.com/6.x/avataaars/svg?seed=" +
+                            item.id
+                          }
+                          alt=""
+                          className="h-8 w-8 rounded-full bg-gray-800"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => openModal(item)}
+                          className="truncate text-sm font-medium leading-6 text-white"
+                        >
+                          {item.firstName + " " + item.lastName}
+                        </button>
                       </div>
-                      <span className="inline-flex items-center rounded-md bg-gray-400/10 px-2 py-1 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-400/20">
-                        {item.status}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-4 pl-0 pr-4 text-sm leading-6 sm:pr-8 lg:pr-20">
-                    <div className="flex items-center justify-end gap-x-2 sm:justify-start">
+                    </td>
+                    <td className="hidden py-4 pl-0 pr-4 sm:table-cell sm:pr-8">
+                      <div className="flex gap-x-3">
+                        <div className="font-mono text-sm leading-6 text-gray-400">
+                          Request -
+                        </div>
+                        <span className="inline-flex items-center rounded-md bg-gray-400/10 px-2 py-1 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-400/20">
+                          {item.status}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 pl-0 pr-4 text-sm leading-6 sm:pr-8 lg:pr-20">
+                      <div className="flex items-center justify-end gap-x-2 sm:justify-start">
+                        <time
+                          className="text-gray-400 sm:hidden"
+                          dateTime={item.updatedAt.toString().substring(0, 10)}
+                        >
+                          {formatDistanceToNow(new Date(item.updatedAt), {
+                            addSuffix: true,
+                          })}
+                        </time>
+                        <div className="hidden text-white sm:block">
+                          {item.address}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="hidden py-4 pl-0 pr-8 text-sm leading-6 text-gray-400 md:table-cell lg:pr-20">
+                      {item.age}
+                    </td>
+                    <td className="hidden py-4 pl-0 pr-4 text-right text-sm leading-6 text-gray-400 sm:table-cell sm:pr-6 lg:pr-8">
                       <time
-                        className="text-gray-400 sm:hidden"
                         dateTime={item.updatedAt.toString().substring(0, 10)}
                       >
                         {formatDistanceToNow(new Date(item.updatedAt), {
                           addSuffix: true,
                         })}
                       </time>
-                      <div className="hidden text-white sm:block">
-                        {item.address}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="hidden py-4 pl-0 pr-8 text-sm leading-6 text-gray-400 md:table-cell lg:pr-20">
-                    {item.age}
-                  </td>
-                  <td className="hidden py-4 pl-0 pr-4 text-right text-sm leading-6 text-gray-400 sm:table-cell sm:pr-6 lg:pr-8">
-                    <time dateTime={item.updatedAt.toString().substring(0, 10)}>
-                      {formatDistanceToNow(new Date(item.updatedAt), {
-                        addSuffix: true,
-                      })}
-                    </time>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
