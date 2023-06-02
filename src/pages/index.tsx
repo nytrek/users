@@ -1,20 +1,22 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dispatch, Fragment, SetStateAction, useState } from "react";
+import clsx from "clsx";
+import { Dispatch, Fragment, SetStateAction, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import useUsers, { User } from "../hooks/useUsers";
+import { formatDistanceToNow } from "date-fns";
 
 function Modal({
   open,
-  title,
+  user,
   setOpen,
 }: {
   open: boolean;
-  title: string;
+  user?: User;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }) {
-  const { register, handleSubmit } = useForm<User>();
+  const { reset, register, handleSubmit } = useForm<User>();
   const queryClient = useQueryClient();
   const createUser = useMutation(
     async (user: User) => {
@@ -47,6 +49,9 @@ function Modal({
     }
   );
   const onSubmit: SubmitHandler<User> = (data) => createUser.mutate(data);
+  useEffect(() => {
+    reset(user);
+  }, [user]);
   return (
     <Transition.Root show={open} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={setOpen}>
@@ -79,7 +84,7 @@ function Modal({
                     <div>
                       <div className="flex items-center justify-between pb-4">
                         <h2 className="text-lg font-semibold leading-7 text-gray-900">
-                          {title}
+                          {user ? "Update User" : "Create User"}
                         </h2>
                         <button type="button" onClick={() => setOpen(false)}>
                           <XMarkIcon className="h-5 w-5" />
@@ -102,7 +107,8 @@ function Modal({
                               {...register("firstName")}
                               id="firstName"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6"
-                              placeholder="User's firstname"
+                              placeholder="John"
+                              defaultValue={user?.firstName}
                               required
                             />
                           </div>
@@ -121,7 +127,8 @@ function Modal({
                               {...register("lastName")}
                               id="lastName"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6"
-                              placeholder="User's lastname"
+                              placeholder="Doe"
+                              defaultValue={user?.lastName}
                               required
                             />
                           </div>
@@ -139,6 +146,7 @@ function Modal({
                               {...register("status")}
                               id="status"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6"
+                              defaultValue={user?.status}
                             >
                               <option>Approved</option>
                               <option>Pending</option>
@@ -162,6 +170,7 @@ function Modal({
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6"
                               min={0}
                               placeholder="10"
+                              defaultValue={user?.age}
                               required
                             />
                           </div>
@@ -180,18 +189,34 @@ function Modal({
                               {...register("address")}
                               id="address"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6"
-                              placeholder="User's address"
+                              placeholder="Acme street 7"
+                              defaultValue={user?.address}
                               required
                             />
                           </div>
                         </div>
 
-                        <button
-                          type="submit"
-                          className="focus-visible:outline-bg-[#FCAF17] mt-6 inline-flex w-full justify-center rounded-md bg-gray-900 px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                        <div
+                          className={clsx(
+                            user ? "sm:col-span-3" : "sm:col-span-2",
+                            "flex items-center space-x-2"
+                          )}
                         >
-                          Save
-                        </button>
+                          <button
+                            type="submit"
+                            className="focus-visible:outline-bg-[#FCAF17] mt-6 inline-flex w-full justify-center rounded-md bg-gray-900 px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                          >
+                            {user ? "Update" : "Create"}
+                          </button>
+                          {!!user && (
+                            <button
+                              type="button"
+                              className="focus-visible:outline-bg-[#FCAF17] mt-6 inline-flex w-full justify-center rounded-md border border-gray-900 px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -208,10 +233,15 @@ function Modal({
 export default function Home() {
   const { data, isLoading } = useUsers();
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<User | undefined>();
+  const openModal = (user?: User) => {
+    setOpen(true);
+    setUser(user);
+  };
   if (isLoading) return <>Loading...</>;
   return (
     <div>
-      <Modal open={open} title={"Create User"} setOpen={setOpen} />
+      <Modal open={open} user={user} setOpen={setOpen} />
       {/* Sticky search header */}
       <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-6 border-b border-white/5 bg-gray-900 px-4 shadow-sm sm:px-6 lg:px-8">
         <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
@@ -270,7 +300,7 @@ export default function Home() {
             <h2>Latest activity</h2>
             <button
               type="button"
-              onClick={() => setOpen(true)}
+              onClick={() => openModal()}
               className="rounded-md border border-white px-3 py-1.5 sm:max-w-xs"
             >
               Create
@@ -333,6 +363,7 @@ export default function Home() {
                       />
                       <button
                         type="button"
+                        onClick={() => openModal(item)}
                         className="truncate text-sm font-medium leading-6 text-white"
                       >
                         {item.firstName + " " + item.lastName}
@@ -355,7 +386,9 @@ export default function Home() {
                         className="text-gray-400 sm:hidden"
                         dateTime={item.updatedAt.toString().substring(0, 10)}
                       >
-                        {item.updatedAt.toString().substring(0, 10)}
+                        {formatDistanceToNow(new Date(item.updatedAt), {
+                          addSuffix: true,
+                        })}
                       </time>
                       <div className="hidden text-white sm:block">
                         {item.address}
@@ -367,7 +400,9 @@ export default function Home() {
                   </td>
                   <td className="hidden py-4 pl-0 pr-4 text-right text-sm leading-6 text-gray-400 sm:table-cell sm:pr-6 lg:pr-8">
                     <time dateTime={item.updatedAt.toString().substring(0, 10)}>
-                      {item.updatedAt.toString().substring(0, 10)}
+                      {formatDistanceToNow(new Date(item.updatedAt), {
+                        addSuffix: true,
+                      })}
                     </time>
                   </td>
                 </tr>
