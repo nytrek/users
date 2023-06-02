@@ -10,9 +10,11 @@ export interface User {
   id: number;
   firstName: string;
   lastName: string;
+  username: string;
   status: Status;
   age: number;
   address: string;
+  password: string;
   createdAt: Date;
   updatedAt: Date;
 }

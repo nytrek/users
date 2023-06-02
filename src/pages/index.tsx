@@ -195,7 +195,7 @@ function Modal({
                             htmlFor="firstName"
                             className="block text-sm leading-6 text-gray-700"
                           >
-                            Firstname
+                            First name
                           </label>
                           <div className="mt-2">
                             <input
@@ -204,7 +204,6 @@ function Modal({
                               id="firstName"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6"
                               placeholder="John"
-                              defaultValue={user?.firstName}
                               required
                             />
                           </div>
@@ -215,7 +214,7 @@ function Modal({
                             htmlFor="lastName"
                             className="block text-sm leading-6 text-gray-700"
                           >
-                            Lastname
+                            Last name
                           </label>
                           <div className="mt-2">
                             <input
@@ -224,7 +223,25 @@ function Modal({
                               id="lastName"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6"
                               placeholder="Doe"
-                              defaultValue={user?.lastName}
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="sm:col-span-3">
+                          <label
+                            htmlFor="username"
+                            className="block text-sm leading-6 text-gray-700"
+                          >
+                            Username
+                          </label>
+                          <div className="mt-2">
+                            <input
+                              type="text"
+                              {...register("username")}
+                              id="username"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6"
+                              placeholder="johndoe97"
                               required
                             />
                           </div>
@@ -265,13 +282,12 @@ function Modal({
                               id="age"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6"
                               placeholder="10"
-                              defaultValue={user?.age}
                               required
                             />
                           </div>
                         </div>
 
-                        <div className="sm:col-span-6">
+                        <div className="sm:col-span-3">
                           <label
                             htmlFor="address"
                             className="block text-sm leading-6 text-gray-700"
@@ -285,8 +301,26 @@ function Modal({
                               id="address"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6"
                               placeholder="Acme street 7"
-                              defaultValue={user?.address}
                               required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="sm:col-span-6">
+                          <label
+                            htmlFor="password"
+                            className="block text-sm leading-6 text-gray-700"
+                          >
+                            {!!user && "Change"} Password
+                          </label>
+                          <div className="mt-2">
+                            <input
+                              type="password"
+                              {...register("password")}
+                              id="password"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6"
+                              placeholder="Acme123"
+                              required={!user}
                             />
                           </div>
                         </div>
@@ -443,7 +477,7 @@ export default function Home() {
                   scope="col"
                   className="py-2 pl-0 pr-4 text-right font-semibold sm:table-cell sm:pr-6 lg:pr-8"
                 >
-                  Updated At
+                  Updated
                 </th>
               </tr>
             </thead>
