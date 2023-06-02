@@ -50,7 +50,14 @@ function Modal({
   );
   const onSubmit: SubmitHandler<User> = (data) => createUser.mutate(data);
   useEffect(() => {
-    reset(user);
+    user
+      ? reset(user)
+      : reset({
+          firstName: "",
+          lastName: "",
+          age: "",
+          address: "",
+        });
   }, [user]);
   return (
     <Transition.Root show={open} as={Fragment}>
